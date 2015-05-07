@@ -33,9 +33,9 @@ LOCAL_SRC_FILES:= \
     IDrm.cpp \
     IDrmClient.cpp \
     IHDCP.cpp \
-    ../../../../ubuntu/libhybris/compat/media/record_thread.cpp \
-    ../../../../ubuntu/libhybris/compat/media/record_track.cpp \
-    ../../../../ubuntu/libhybris/compat/media/camera_record_service.cpp \
+    record_thread.cpp \
+    record_track.cpp \
+    camera_record_service.cpp \
     AudioRecordHybris.cpp \
     AudioSystem.cpp \
     mediaplayer.cpp \
@@ -109,7 +109,7 @@ endif
 LOCAL_SHARED_LIBRARIES := \
 	libui liblog libcutils libutils libbinder libsonivox libicuuc libexpat \
         libcamera_client libstagefright_foundation \
-        libgui libdl libaudioutils
+        libgui libdl libaudioutils libpower
 
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
 LOCAL_SHARED_LIBRARIES += libaudioparameter
@@ -126,6 +126,7 @@ LOCAL_C_INCLUDES := \
     $(call include-path-for, audio-effects) \
     $(call include-path-for, audio-utils) \
     $(TOP)/ubuntu/libhybris/hybris/include \
-    $(TOP)/ubuntu/libhybris/compat/media
+    $(TOP)/ubuntu/libhybris/compat/media \
+    $(TOP)/hardware/libhardware_legacy/include
 
 include $(BUILD_SHARED_LIBRARY)
