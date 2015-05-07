@@ -73,6 +73,7 @@ struct StagefrightRecorder : public MediaRecorderBase {
     virtual status_t dump(int fd, const Vector<String16>& args) const;
     // Querying a SurfaceMediaSourcer
     virtual sp<IGraphicBufferProducer> querySurfaceMediaSource() const;
+    static void onReadAudioCb(void *context);
 
 private:
     AppOpsManager mAppOpsManager;
@@ -137,6 +138,8 @@ private:
 #ifdef MTK_HARDWARE
     StagefrightRecorderMemoryHandler *mMtkMemoryHandler;
 #endif
+
+    void onReadAudio();
 
     status_t setupMPEG4Recording(
         int outputFd,

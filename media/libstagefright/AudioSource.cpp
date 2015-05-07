@@ -29,6 +29,9 @@
 #include <media/stagefright/foundation/ALooper.h>
 #include <cutils/properties.h>
 #include <stdlib.h>
+
+#include <media/IMediaRecorderClient.h>
+
 #ifdef ENABLE_AV_ENHANCEMENTS
 #include <QCMediaDefs.h>
 #endif
@@ -63,6 +66,8 @@ AudioSource::AudioSource(
 #else
     : mStarted(false),
 #endif
+      mAudioReadCb(0),
+      mAudioReadContext(0),
       mSampleRate(sampleRate),
       mPrevSampleTimeUs(0),
       mRecPaused(false),
@@ -204,6 +209,14 @@ status_t AudioSource::initCheck() const {
     return mInitCheck;
 }
 
+status_t AudioSource::setListener(const sp<IMediaRecorderClient>& listener)
+{
+    Mutex::Autolock autoLock(mLock);
+    mListener = listener;
+
+    return NO_ERROR;
+}
+
 status_t AudioSource::start(MetaData *params) {
     Mutex::Autolock autoLock(mLock);
 
@@ -245,7 +258,6 @@ status_t AudioSource::pause() {
 }
 
 void AudioSource::releaseQueuedFrames_l() {
-    ALOGV("releaseQueuedFrames_l");
     List<MediaBuffer *>::iterator it;
     while (!mBuffersReceived.empty()) {
         it = mBuffersReceived.begin();
@@ -278,6 +290,25 @@ status_t AudioSource::reset() {
     releaseQueuedFrames_l();
 
     return OK;
+}
+
+void AudioSource::setReadAudioCb(on_audio_source_read_audio cb, void *context)
+{
+    mAudioReadCb = cb;
+    mAudioReadContext = context;
+
+    // RecordThread has been setup successfully by this point, so signal
+    // the callback to trigger the writer to begin read/writing mic data
+    triggerReadAudio();
+}
+
+void AudioSource::triggerReadAudio()
+{
+    if (mAudioReadCb != NULL) {
+        mAudioReadCb(mAudioReadContext);
+    }
+    else
+        ALOGW("Couldn't read new audio data since mAudioReadCb is NULL");
 }
 
 sp<MetaData> AudioSource::getFormat() {
@@ -396,7 +427,6 @@ status_t AudioSource::read(
 }
 
 void AudioSource::signalBufferReturned(MediaBuffer *buffer) {
-    ALOGV("signalBufferReturned: %p", buffer->data());
     Mutex::Autolock autoLock(mLock);
     --mNumClientOwnedBuffers;
     buffer->setObserver(0);
